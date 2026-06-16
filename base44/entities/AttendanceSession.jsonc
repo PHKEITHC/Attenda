@@ -1,0 +1,32 @@
+{
+  "name": "AttendanceSession",
+  "type": "object",
+  "properties": {
+    "class_id": {
+      "type": "string",
+      "title": "Class ID"
+    },
+    "session_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Session Date"
+    },
+    "submitted_at": {
+      "type": "string",
+      "title": "Submitted At"
+    },
+    "teacher_id": {
+      "type": "string",
+      "title": "Teacher ID"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "class_id",
+    "session_date",
+    "teacher_id"
+  ]
+}

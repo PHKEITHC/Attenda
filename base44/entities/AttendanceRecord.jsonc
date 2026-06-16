@@ -1,0 +1,40 @@
+{
+  "name": "AttendanceRecord",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "title": "Session ID"
+    },
+    "class_id": {
+      "type": "string",
+      "title": "Class ID"
+    },
+    "student_id": {
+      "type": "string",
+      "title": "Student ID"
+    },
+    "student_name": {
+      "type": "string",
+      "title": "Student Name"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "present",
+        "absent"
+      ],
+      "title": "Status"
+    },
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    }
+  },
+  "required": [
+    "session_id",
+    "class_id",
+    "student_id",
+    "status"
+  ]
+}

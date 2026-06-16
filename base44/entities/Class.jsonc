@@ -1,0 +1,31 @@
+{
+  "name": "Class",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Class Name"
+    },
+    "subject": {
+      "type": "string",
+      "title": "Subject"
+    },
+    "class_code": {
+      "type": "string",
+      "title": "Class Code"
+    },
+    "teacher_id": {
+      "type": "string",
+      "title": "Teacher ID"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    }
+  },
+  "required": [
+    "name",
+    "class_code",
+    "teacher_id"
+  ]
+}

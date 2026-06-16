@@ -1,0 +1,52 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "message": {
+      "type": "string",
+      "title": "Message"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "present",
+        "absent"
+      ],
+      "title": "Status"
+    },
+    "session_id": {
+      "type": "string",
+      "title": "Session ID"
+    },
+    "class_id": {
+      "type": "string",
+      "title": "Class ID"
+    },
+    "class_name": {
+      "type": "string",
+      "title": "Class Name"
+    },
+    "session_date": {
+      "type": "string",
+      "title": "Session Date"
+    },
+    "is_read": {
+      "type": "boolean",
+      "title": "Is Read",
+      "default": false
+    }
+  },
+  "required": [
+    "user_id",
+    "title",
+    "message"
+  ]
+}

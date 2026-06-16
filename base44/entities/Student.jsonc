@@ -1,0 +1,31 @@
+{
+  "name": "Student",
+  "type": "object",
+  "properties": {
+    "class_id": {
+      "type": "string",
+      "title": "Class ID"
+    },
+    "student_id": {
+      "type": "string",
+      "title": "Student ID"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    }
+  },
+  "required": [
+    "class_id",
+    "student_id",
+    "full_name"
+  ]
+}

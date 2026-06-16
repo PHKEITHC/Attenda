@@ -1,0 +1,34 @@
+{
+  "name": "UserProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "teacher",
+        "student"
+      ],
+      "title": "Role"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "student_id": {
+      "type": "string",
+      "title": "Student ID"
+    },
+    "class_id": {
+      "type": "string",
+      "title": "Class ID"
+    }
+  },
+  "required": [
+    "user_id",
+    "role"
+  ]
+}
