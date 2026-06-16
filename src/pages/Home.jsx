@@ -4,7 +4,6 @@ import { base44 } from "@/api/base44Client";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     redirect();
@@ -13,21 +12,31 @@ export default function Home() {
   const redirect = async () => {
     try {
       const me = await base44.auth.me();
-      const profiles = await base44.entities.UserProfile.filter({ user_id: me.id });
-      if (profiles.length === 0) {
-        navigate("/select-role");
+
+      // Base44 admins go directly to admin dashboard
+      if (me.role === "admin") {
+        navigate("/admin");
         return;
       }
-      const role = profiles[0].role;
+
+      // For all others, check AllowedUser list
+      const allowed = await base44.entities.AllowedUser.filter({ email: me.email });
+      if (allowed.length === 0 || !allowed[0].is_active) {
+        navigate("/access-denied");
+        return;
+      }
+
+      const role = allowed[0].role;
       if (role === "teacher") {
         navigate("/teacher/classes");
+      } else if (role === "parent") {
+        navigate("/parent");
       } else {
         navigate("/student/classes");
       }
     } catch (e) {
       navigate("/login");
     }
-    setLoading(false);
   };
 
   return (

@@ -63,6 +63,26 @@ export default function AttendanceSessionTab({ classId, students }) {
           session_date: sessionDate,
           is_read: false,
         });
+
+        // Also notify parent(s) linked to this student's email
+        if (s.email) {
+          const parentAllowed = await base44.entities.AllowedUser.filter({ linked_student_email: s.email, role: "parent" });
+          for (const parent of parentAllowed) {
+            if (parent.user_id_cache) {
+              await base44.entities.Notification.create({
+                user_id: parent.user_id_cache,
+                title: `Child Attendance: ${className}`,
+                message: `${s.full_name}'s attendance for ${sessionDate}: ${status === "present" ? "✅ Present" : "❌ Absent"}`,
+                status,
+                session_id: session.id,
+                class_id: classId,
+                class_name: className,
+                session_date: sessionDate,
+                is_read: false,
+              });
+            }
+          }
+        }
       }
 
       setSubmitted(true);

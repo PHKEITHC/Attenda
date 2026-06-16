@@ -1,0 +1,48 @@
+{
+  "name": "AllowedUser",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "teacher",
+        "student",
+        "parent"
+      ],
+      "title": "Role"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "student_id": {
+      "type": "string",
+      "title": "Student ID (for students/parents)"
+    },
+    "class_id": {
+      "type": "string",
+      "title": "Class ID"
+    },
+    "linked_student_email": {
+      "type": "string",
+      "title": "Linked Student Email (for parents)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Is Active",
+      "default": true
+    },
+    "user_id_cache": {
+      "type": "string",
+      "title": "User ID Cache"
+    }
+  },
+  "required": [
+    "email",
+    "role"
+  ]
+}

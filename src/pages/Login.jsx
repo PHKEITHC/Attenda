@@ -117,10 +117,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-primary font-medium hover:underline">
-            Register
-          </Link>
+          Access is by invitation only. Contact your administrator for an account.
         </p>
       </motion.div>
     </div>

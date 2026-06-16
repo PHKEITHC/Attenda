@@ -13,11 +13,13 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import RoleSelection from './pages/RoleSelection';
+import AccessDenied from './pages/AccessDenied';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import TeacherClasses from './pages/teacher/TeacherClasses';
 import TeacherClassDetail from './pages/teacher/TeacherClassDetail';
 import StudentClasses from './pages/student/StudentClasses';
 import StudentNotifications from './pages/student/StudentNotifications';
+import ParentDashboard from './pages/parent/ParentDashboard';
 
 // Layouts
 import TeacherLayout from './components/TeacherLayout';
@@ -50,10 +52,13 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/select-role" element={<RoleSelection />} />
+      <Route path="/access-denied" element={<AccessDenied />} />
 
       {/* Home — detects role and redirects */}
       <Route path="/" element={<Home />} />
+
+      {/* Admin */}
+      <Route path="/admin" element={<AdminDashboard />} />
 
       {/* Teacher routes */}
       <Route element={<TeacherLayout />}>
@@ -66,6 +71,9 @@ const AuthenticatedApp = () => {
         <Route path="/student/classes" element={<StudentClasses />} />
         <Route path="/student/notifications" element={<StudentNotifications />} />
       </Route>
+
+      {/* Parent */}
+      <Route path="/parent" element={<ParentDashboard />} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>
