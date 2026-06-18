@@ -75,20 +75,49 @@ export default function AdminDashboard() {
   };
 
   const parseFile = async (file) => {
+    const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+
+    if (isExcel) {
+      // Upload then extract via integration
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: {
+          type: "object",
+          properties: {
+            rows: {
+              type: "array",
+              items: { type: "object", additionalProperties: { type: "string" } },
+            },
+          },
+        },
+      });
+      if (result.status !== "success") throw new Error(result.details || "Extraction failed");
+      return Array.isArray(result.output) ? result.output : (result.output?.rows || []);
+    }
+
+    // CSV parsing
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const wb = XLSX.read(e.target.result, { type: "array" });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
-          resolve(data);
+          const text = e.target.result;
+          const lines = text.trim().split("\n").filter((l) => l.trim());
+          const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, "").toLowerCase());
+          const rows = [];
+          for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(",").map((c) => c.trim().replace(/"/g, ""));
+            const row = {};
+            headers.forEach((h, idx) => { row[h] = cols[idx] || ""; });
+            rows.push(row);
+          }
+          resolve(rows);
         } catch (err) {
           reject(err);
         }
       };
       reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
+      reader.readAsText(file);
     });
   };
 
