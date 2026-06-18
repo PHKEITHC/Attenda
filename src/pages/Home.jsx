@@ -26,7 +26,7 @@ export default function Home() {
         base44.entities.ParentAccount.filter({ email: me.email }),
       ]);
 
-      if (teachers.length > 0 && teachers[0].is_active) {
+      if (teachers.length > 0 && teachers[0].is_active !== false) {
         // Cache user_id on TeacherAccount for notifications
         if (!teachers[0].user_id_cache) {
           await base44.entities.TeacherAccount.update(teachers[0].id, { user_id_cache: me.id });
