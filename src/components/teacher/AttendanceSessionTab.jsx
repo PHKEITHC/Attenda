@@ -28,7 +28,7 @@ export default function AttendanceSessionTab({ classId, students }) {
       const cls = await base44.entities.Class.filter({ id: classId });
       const className = cls[0]?.name || "Class";
 
-      // Create the session
+      // Create session
       const session = await base44.entities.AttendanceSession.create({
         class_id: classId,
         session_date: sessionDate,
@@ -45,29 +45,34 @@ export default function AttendanceSessionTab({ classId, students }) {
         status: absentIds.has(s.id) ? "absent" : "present",
         user_id: s.user_id || "",
       }));
-
       await base44.entities.AttendanceRecord.bulkCreate(records);
 
-      // Send notifications to students who have linked accounts
-      const linkedStudents = students.filter((s) => s.user_id);
-      for (const s of linkedStudents) {
+      // Send notifications — look up each student's user_id_cache from StudentAccount
+      for (const s of students) {
         const status = absentIds.has(s.id) ? "absent" : "present";
-        await base44.entities.Notification.create({
-          user_id: s.user_id,
-          title: `Attendance: ${className}`,
-          message: `Your attendance for ${sessionDate} has been recorded. Status: ${status === "present" ? "✅ Present" : "❌ Absent"}`,
-          status,
-          session_id: session.id,
-          class_id: classId,
-          class_name: className,
-          session_date: sessionDate,
-          is_read: false,
-        });
 
-        // Also notify parent(s) linked to this student's email
+        // Find StudentAccount to get user_id_cache
+        const studentAccounts = await base44.entities.StudentAccount.filter({ student_uid: s.student_id });
+        const studentUserId = s.user_id || studentAccounts[0]?.user_id_cache || null;
+
+        if (studentUserId) {
+          await base44.entities.Notification.create({
+            user_id: studentUserId,
+            title: `Attendance: ${className}`,
+            message: `Your attendance for ${sessionDate} has been recorded. Status: ${status === "present" ? "✅ Present" : "❌ Absent"}`,
+            status,
+            session_id: session.id,
+            class_id: classId,
+            class_name: className,
+            session_date: sessionDate,
+            is_read: false,
+          });
+        }
+
+        // Notify linked parents
         if (s.email) {
-          const parentAllowed = await base44.entities.AllowedUser.filter({ linked_student_email: s.email, role: "parent" });
-          for (const parent of parentAllowed) {
+          const parents = await base44.entities.ParentAccount.filter({ linked_student_email: s.email });
+          for (const parent of parents) {
             if (parent.user_id_cache) {
               await base44.entities.Notification.create({
                 user_id: parent.user_id_cache,
@@ -109,7 +114,7 @@ export default function AttendanceSessionTab({ classId, students }) {
           <Users className="w-7 h-7 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-semibold font-heading mb-1">No students yet</h3>
-        <p className="text-muted-foreground text-sm">Upload a CSV roster to add students to this class</p>
+        <p className="text-muted-foreground text-sm">Upload a CSV or Excel roster to add students to this class</p>
       </div>
     );
   }
@@ -148,7 +153,6 @@ export default function AttendanceSessionTab({ classId, students }) {
 
   return (
     <div>
-      {/* Session Controls */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-muted-foreground">Date:</label>
@@ -165,7 +169,6 @@ export default function AttendanceSessionTab({ classId, students }) {
         </div>
       </div>
 
-      {/* Search */}
       <div className="mb-4">
         <input
           value={searchQuery}
@@ -175,12 +178,10 @@ export default function AttendanceSessionTab({ classId, students }) {
         />
       </div>
 
-      {/* Instructions */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-5 text-sm text-blue-700">
         All students are marked <strong>Present</strong> by default. Click a student to mark them <strong>Absent</strong>.
       </div>
 
-      {/* Student List */}
       <div className="space-y-2 mb-6">
         {filtered.map((s, i) => {
           const isAbsent = absentIds.has(s.id);
@@ -192,9 +193,7 @@ export default function AttendanceSessionTab({ classId, students }) {
               transition={{ delay: i * 0.02 }}
               onClick={() => toggleAbsent(s.id)}
               className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-                isAbsent
-                  ? "border-red-300 bg-red-50"
-                  : "border-green-200 bg-green-50 hover:border-green-400"
+                isAbsent ? "border-red-300 bg-red-50" : "border-green-200 bg-green-50 hover:border-green-400"
               }`}
             >
               <div className={`flex-shrink-0 ${isAbsent ? "text-red-500" : "text-green-500"}`}>
@@ -212,7 +211,6 @@ export default function AttendanceSessionTab({ classId, students }) {
         })}
       </div>
 
-      {/* Submit */}
       <button
         onClick={handleSubmit}
         disabled={submitting}

@@ -1,0 +1,32 @@
+{
+  "name": "StudentAccount",
+  "type": "object",
+  "properties": {
+    "student_uid": {
+      "type": "string",
+      "title": "Student Unique ID"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Is Active",
+      "default": true
+    },
+    "user_id_cache": {
+      "type": "string",
+      "title": "User ID Cache"
+    }
+  },
+  "required": [
+    "student_uid",
+    "email",
+    "full_name"
+  ]
+}

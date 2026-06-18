@@ -1,0 +1,35 @@
+{
+  "name": "ParentAccount",
+  "type": "object",
+  "properties": {
+    "parent_uid": {
+      "type": "string",
+      "title": "Parent Unique ID"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "linked_student_email": {
+      "type": "string",
+      "title": "Linked Student Email"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Is Active",
+      "default": true
+    },
+    "user_id_cache": {
+      "type": "string",
+      "title": "User ID Cache"
+    }
+  },
+  "required": [
+    "parent_uid",
+    "linked_student_email"
+  ]
+}

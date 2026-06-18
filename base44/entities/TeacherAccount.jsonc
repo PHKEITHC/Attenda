@@ -1,0 +1,32 @@
+{
+  "name": "TeacherAccount",
+  "type": "object",
+  "properties": {
+    "teacher_uid": {
+      "type": "string",
+      "title": "Teacher Unique ID"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "full_name": {
+      "type": "string",
+      "title": "Full Name"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Is Active",
+      "default": true
+    },
+    "user_id_cache": {
+      "type": "string",
+      "title": "User ID Cache"
+    }
+  },
+  "required": [
+    "teacher_uid",
+    "email",
+    "full_name"
+  ]
+}
