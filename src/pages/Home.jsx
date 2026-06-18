@@ -19,21 +19,39 @@ export default function Home() {
         return;
       }
 
-      // For all others, check AllowedUser list
-      const allowed = await base44.entities.AllowedUser.filter({ email: me.email });
-      if (allowed.length === 0 || !allowed[0].is_active) {
-        navigate("/access-denied");
+      // Check role-specific account databases in parallel
+      const [teachers, students, parents] = await Promise.all([
+        base44.entities.TeacherAccount.filter({ email: me.email }),
+        base44.entities.StudentAccount.filter({ email: me.email }),
+        base44.entities.ParentAccount.filter({ email: me.email }),
+      ]);
+
+      if (teachers.length > 0 && teachers[0].is_active) {
+        // Cache user_id on TeacherAccount for notifications
+        if (!teachers[0].user_id_cache) {
+          await base44.entities.TeacherAccount.update(teachers[0].id, { user_id_cache: me.id });
+        }
+        navigate("/teacher/classes");
         return;
       }
 
-      const role = allowed[0].role;
-      if (role === "teacher") {
-        navigate("/teacher/classes");
-      } else if (role === "parent") {
-        navigate("/parent");
-      } else {
+      if (students.length > 0 && students[0].is_active) {
+        if (!students[0].user_id_cache) {
+          await base44.entities.StudentAccount.update(students[0].id, { user_id_cache: me.id });
+        }
         navigate("/student/classes");
+        return;
       }
+
+      if (parents.length > 0 && parents[0].is_active) {
+        if (!parents[0].user_id_cache) {
+          await base44.entities.ParentAccount.update(parents[0].id, { user_id_cache: me.id });
+        }
+        navigate("/parent");
+        return;
+      }
+
+      navigate("/access-denied");
     } catch (e) {
       navigate("/login");
     }

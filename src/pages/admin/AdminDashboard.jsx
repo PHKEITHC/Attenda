@@ -29,16 +29,18 @@ function parseRows(data, role) {
   const errors = [];
 
   data.forEach((row, i) => {
-    // normalize keys to lowercase, trim
+    // normalize keys: lowercase, trim whitespace, collapse spaces to underscore, remove parentheses and special chars
     const normalized = {};
     Object.keys(row).forEach((k) => {
-      normalized[k.trim().toLowerCase().replace(/\s+/g, "_")] = String(row[k] ?? "").trim();
+      const normKey = k.trim().toLowerCase().replace(/\(.*?\)/g, "").replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").replace(/_+/g, "_").replace(/^_|_$/g, "");
+      normalized[normKey] = String(row[k] ?? "").trim();
     });
 
-    // map aliases
-    const uid = normalized[uidField] || normalized["id"] || normalized["uid"] || "";
-    const email = normalized["email"] || "";
-    const full_name = normalized["full_name"] || normalized["name"] || "";
+    // map uid field — handle "teacher_uid_id" → "teacher_uid", "student_uid_id" → "student_uid", "parent_uid_id" → "parent_uid"
+    const uidNorm = uidField; // e.g. "teacher_uid"
+    const uid = normalized[uidNorm] || normalized[uidNorm + "_id"] || normalized["id"] || normalized["uid"] || "";
+    const email = normalized["email"] || normalized["email_optional"] || "";
+    const full_name = normalized["full_name"] || normalized["full_name_optional"] || normalized["name"] || "";
     const linked_student_email = normalized["linked_student_email"] || normalized["student_email"] || "";
 
     const record = { [uidField]: uid, email, full_name, linked_student_email, is_active: true };
