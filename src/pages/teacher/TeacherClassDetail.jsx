@@ -59,17 +59,33 @@ export default function TeacherClassDetail() {
         return;
       }
 
-      const records = [];
+      const rows = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(",").map((c) => c.trim());
         const name = cols[nameIdx];
         const sid = cols[idIdx];
         if (!name || !sid) continue;
-        // Check if already exists
-        const exists = students.find((s) => s.student_id === sid);
-        if (!exists) {
-          records.push({ class_id: classId, student_id: sid, full_name: name });
+        rows.push({ name, sid });
+      }
+
+      // Validate each student_id exists in StudentAccount
+      const notFound = [];
+      const records = [];
+      for (const { name, sid } of rows) {
+        const alreadyInClass = students.find((s) => s.student_id === sid);
+        if (alreadyInClass) continue;
+        const acct = await base44.entities.StudentAccount.filter({ student_uid: sid });
+        if (acct.length === 0) {
+          notFound.push(sid);
+        } else {
+          records.push({ class_id: classId, student_id: sid, full_name: acct[0].full_name || name, email: acct[0].email || "" });
         }
+      }
+
+      if (notFound.length > 0) {
+        setUploadError(`❌ Student IDs not found in database: ${notFound.join(", ")}`);
+        setUploading(false);
+        return;
       }
 
       if (records.length > 0) {
@@ -164,6 +180,7 @@ export default function TeacherClassDetail() {
                   John Smith,S001<br />
                   Jane Doe,S002
                 </code>
+                <p className="mt-2 text-xs">⚠️ Student IDs must exist in the student database. Unrecognized IDs will be rejected.</p>
               </div>
               {uploadError && (
                 <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-2.5 mb-4">{uploadError}</p>
