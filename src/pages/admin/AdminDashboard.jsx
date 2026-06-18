@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Users, Upload, Trash2, LogOut, ShieldCheck, RefreshCw, GraduationCap, BookOpen, Heart } from "lucide-react";
+import * as XLSX from "xlsx";
 import { motion } from "framer-motion";
 
 
