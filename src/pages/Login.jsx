@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function Login() {
   const [mode, setMode] = useState("login"); // login | setup
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ id: "", password: "" });
   const [setupForm, setSetupForm] = useState({ email: "", password: "", confirm: "" });
   const [setupStep, setSetupStep] = useState("form"); // form | otp
   const [otp, setOtp] = useState("");
@@ -20,10 +20,23 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await base44.auth.loginViaEmailPassword(form.email, form.password);
+      // Resolve ID → email across all account types
+      const id = form.id.trim();
+      const [teachers, students, parents] = await Promise.all([
+        base44.entities.TeacherAccount.filter({ teacher_uid: id }),
+        base44.entities.StudentAccount.filter({ student_uid: id }),
+        base44.entities.ParentAccount.filter({ parent_uid: id }),
+      ]);
+      const account = teachers[0] || students[0] || parents[0];
+      if (!account) {
+        setError("ID not found. Please check your ID and try again.");
+        setLoading(false);
+        return;
+      }
+      await base44.auth.loginViaEmailPassword(account.email, form.password);
       window.location.href = "/";
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || "Invalid ID or password");
     }
     setLoading(false);
   };
@@ -118,12 +131,12 @@ export default function Login() {
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">Email</label>
+                  <label className="block text-sm font-medium mb-1.5">ID</label>
                   <input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="you@example.com"
+                    type="text"
+                    value={form.id}
+                    onChange={(e) => setForm({ ...form, id: e.target.value })}
+                    placeholder="e.g. S2601, T2601, P2601"
                     required
                     className="w-full border border-border rounded-xl px-4 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />

@@ -1,15 +1,14 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { BookOpen, CheckCircle2, XCircle } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
+import StudentClassCard from "@/components/student/StudentClassCard";
 
 export default function StudentClasses() {
   const [me, setMe] = useState(null);
-  const [myClass, setMyClass] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [sessions, setSessions] = useState([]);
-  const [myRecords, setMyRecords] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [studentId, setStudentId] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     init();
@@ -20,38 +19,39 @@ export default function StudentClasses() {
     const user = await base44.auth.me();
     setMe(user);
 
-    // Get student info from AllowedUser
-    const [allowed] = await base44.entities.AllowedUser.filter({ email: user.email });
-    if (!allowed?.student_id) {
+    // Find student account by email to get student_uid
+    const [acct] = await base44.entities.StudentAccount.filter({ email: user.email });
+    if (!acct) {
       setLoading(false);
       return;
     }
-    setStudentId(allowed.student_id);
+    setStudentId(acct.student_uid);
 
-    // Find student roster entry
-    const studentRecs = await base44.entities.Student.filter({ student_id: allowed.student_id });
-    if (studentRecs.length === 0) {
+    // Auto-link user_id_cache if not set
+    if (!acct.user_id_cache) {
+      await base44.entities.StudentAccount.update(acct.id, { user_id_cache: user.id });
+    }
+
+    // Find ALL roster entries for this student (across multiple classes)
+    const roster = await base44.entities.Student.filter({ student_id: acct.student_uid });
+    if (roster.length === 0) {
       setLoading(false);
       return;
     }
-    const student = studentRecs[0];
 
-    // Auto-link user_id if not set
-    if (!student.user_id) {
-      await base44.entities.Student.update(student.id, { user_id: user.id, email: user.email });
+    // Auto-link user_id on roster entries
+    for (const r of roster) {
+      if (!r.user_id) {
+        await base44.entities.Student.update(r.id, { user_id: user.id, email: user.email });
+      }
     }
 
-    const classData = await base44.entities.Class.filter({ id: student.class_id });
-    setMyClass(classData[0] || null);
-
-    if (classData[0]) {
-      const [sess, recs] = await Promise.all([
-        base44.entities.AttendanceSession.filter({ class_id: classData[0].id }, "-session_date"),
-        base44.entities.AttendanceRecord.filter({ class_id: classData[0].id, student_id: allowed.student_id }),
-      ]);
-      setSessions(sess);
-      setMyRecords(recs);
-    }
+    // Fetch all classes the student is enrolled in
+    const classIds = [...new Set(roster.map((r) => r.class_id))];
+    const classData = await Promise.all(
+      classIds.map((cid) => base44.entities.Class.filter({ id: cid }))
+    );
+    setClasses(classData.map((c) => c[0]).filter(Boolean));
     setLoading(false);
   };
 
@@ -63,18 +63,14 @@ export default function StudentClasses() {
     );
   }
 
-  const present = myRecords.filter((r) => r.status === "present").length;
-  const absent = myRecords.filter((r) => r.status === "absent").length;
-  const rate = myRecords.length > 0 ? Math.round((present / myRecords.length) * 100) : null;
-
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground font-heading">My Class</h1>
+        <h1 className="text-2xl font-bold text-foreground font-heading">My Classes</h1>
         <p className="text-muted-foreground text-sm mt-1">{me?.full_name || me?.email}</p>
       </div>
 
-      {!myClass ? (
+      {classes.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -84,83 +80,13 @@ export default function StudentClasses() {
             <BookOpen className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-semibold font-heading mb-1">Not enrolled in any class</h3>
-          <p className="text-muted-foreground text-sm">Your class will appear here once your teacher adds you to the roster.</p>
+          <p className="text-muted-foreground text-sm">Your classes will appear here once a teacher adds you to the roster.</p>
         </motion.div>
       ) : (
         <div className="space-y-6">
-          {/* Class Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-card border border-border rounded-2xl p-6"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold font-heading text-foreground">{myClass.name}</h2>
-                {myClass.subject && <p className="text-muted-foreground text-sm">{myClass.subject}</p>}
-                {myClass.description && <p className="text-muted-foreground text-sm mt-1">{myClass.description}</p>}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: "Sessions", value: sessions.length, delay: 0.1 },
-              { label: "Present", value: present, delay: 0.15, color: "text-green-700" },
-              { label: "Attendance", value: rate !== null ? `${rate}%` : "—", delay: 0.2, color: rate !== null && rate < 75 ? "text-red-600" : undefined },
-            ].map(({ label, value, delay, color }) => (
-              <motion.div
-                key={label}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay }}
-                className="bg-card border border-border rounded-2xl p-5 text-center"
-              >
-                <p className={`text-2xl font-bold font-heading ${color || ""}`}>{value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{label}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Attendance History */}
-          {myRecords.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="bg-card border border-border rounded-2xl overflow-hidden"
-            >
-              <div className="px-6 py-4 border-b border-border">
-                <h3 className="font-bold font-heading text-foreground">My Attendance History</h3>
-              </div>
-              <div className="divide-y divide-border">
-                {sessions.map((session) => {
-                  const record = myRecords.find((r) => r.session_id === session.id);
-                  if (!record) return null;
-                  return (
-                    <div key={session.id} className="flex items-center justify-between px-6 py-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {new Date(session.session_date + "T00:00:00").toLocaleDateString("en-US", {
-                            weekday: "short", month: "short", day: "numeric",
-                          })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{session.session_date}</p>
-                      </div>
-                      <span className={`text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 ${record.status === "present" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {record.status === "present" ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
-                        {record.status === "present" ? "Present" : "Absent"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
+          {classes.map((cls, i) => (
+            <StudentClassCard key={cls.id} cls={cls} studentId={studentId} index={i} />
+          ))}
         </div>
       )}
     </div>

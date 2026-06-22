@@ -78,27 +78,6 @@ export default function AdminDashboard() {
   };
 
   const parseFile = async (file) => {
-    const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
-
-    if (isExcel) {
-      // Upload then extract via integration
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url,
-        json_schema: {
-          type: "object",
-          properties: {
-            rows: {
-              type: "array",
-              items: { type: "object", additionalProperties: { type: "string" } },
-            },
-          },
-        },
-      });
-      if (result.status !== "success") throw new Error(result.details || "Extraction failed");
-      return Array.isArray(result.output) ? result.output : (result.output?.rows || []);
-    }
-
     // CSV parsing
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -219,7 +198,7 @@ export default function AdminDashboard() {
         {/* Import Section */}
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <h2 className="font-semibold font-heading text-base mb-1 flex items-center gap-2">
-            <Upload className="w-4 h-4 text-primary" /> Import {tab.label} via CSV or Excel
+            <Upload className="w-4 h-4 text-primary" /> Import {tab.label} via CSV
           </h2>
           <p className="text-xs text-muted-foreground mb-3">
             Required columns: {FIELD_LABELS[activeTab].map((f) => (
@@ -230,7 +209,7 @@ export default function AdminDashboard() {
             {importing
               ? <><span className="w-4 h-4 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" /> Importing…</>
               : <><Upload className="w-4 h-4" /> Upload File</>}
-            <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleUpload} disabled={importing} />
+            <input type="file" accept=".csv" className="hidden" onChange={handleUpload} disabled={importing} />
           </label>
           {importStatus && <p className="mt-3 text-sm font-medium">{importStatus}</p>}
         </div>
