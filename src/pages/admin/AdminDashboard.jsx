@@ -12,15 +12,15 @@ const TABS = [
 ];
 
 const ENTITY_MAP = {
-  teacher: { entity: "TeacherAccount", uidField: "teacher_uid", required: ["teacher_uid", "email", "full_name"] },
-  student: { entity: "StudentAccount", uidField: "student_uid", required: ["student_uid", "email", "full_name"] },
-  parent: { entity: "ParentAccount", uidField: "parent_uid", required: ["parent_uid", "linked_student_email"] },
+  teacher: { entity: "TeacherAccount", uidField: "teacher_uid", required: ["teacher_uid"] },
+  student: { entity: "StudentAccount", uidField: "student_uid", required: ["student_uid"] },
+  parent: { entity: "ParentAccount", uidField: "parent_uid", required: ["parent_uid"] },
 };
 
 const FIELD_LABELS = {
-  teacher: ["teacher_uid (ID)", "email", "full_name"],
-  student: ["student_uid (ID)", "email", "full_name"],
-  parent: ["parent_uid (ID)", "linked_student_email", "email (optional)", "full_name (optional)"],
+  teacher: ["teacher_uid (ID)", "email (optional)", "full_name (optional)"],
+  student: ["student_uid (ID)", "email (optional)", "full_name (optional)"],
+  parent: ["parent_uid (ID)", "linked_student_email (optional)", "email (optional)", "full_name (optional)"],
 };
 
 function parseRows(data, role) {

@@ -29,7 +29,6 @@
     }
   },
   "required": [
-    "parent_uid",
-    "linked_student_email"
+    "parent_uid"
   ]
 }
