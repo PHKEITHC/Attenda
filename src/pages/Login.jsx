@@ -8,9 +8,6 @@ export default function Login() {
   const [mode, setMode] = useState("login"); // login | setup
   const [form, setForm] = useState({ id: "", password: "" });
   const [setupForm, setSetupForm] = useState({ id: "", password: "", confirm: "" });
-  const [setupEmail, setSetupEmail] = useState("");
-  const [setupStep, setSetupStep] = useState("form"); // form | otp
-  const [otp, setOtp] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -71,26 +68,11 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      setSetupEmail(email);
       await base44.auth.register({ email, password: setupForm.password });
-      setSetupStep("otp");
-      setInfo(`A verification code was sent to ${email}`);
-    } catch (err) {
-      setError(err.message || "Setup failed. Your ID may not be registered.");
-    }
-    setLoading(false);
-  };
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const { access_token } = await base44.auth.verifyOtp({ email: setupEmail, otpCode: otp });
-      base44.auth.setToken(access_token);
+      await base44.auth.loginViaEmailPassword(email, setupForm.password);
       window.location.href = "/";
     } catch (err) {
-      setError(err.message || "Invalid code. Please try again.");
+      setError(err.message || "Setup failed. Your ID may not be registered.");
     }
     setLoading(false);
   };
@@ -99,8 +81,6 @@ export default function Login() {
     setMode(m);
     setError("");
     setInfo("");
-    setSetupStep("form");
-    setOtp("");
   };
 
   return (
@@ -191,7 +171,7 @@ export default function Login() {
                   {loading ? "Signing in…" : "Sign In"}
                 </button>
               </motion.form>
-            ) : setupStep === "form" ? (
+            ) : (
               <motion.form
                 key="setup"
                 initial={{ opacity: 0, x: 10 }}
@@ -248,37 +228,6 @@ export default function Login() {
                   className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 disabled:opacity-40 transition-all"
                 >
                   {loading ? "Setting up…" : "Set Up Account"}
-                </button>
-              </motion.form>
-            ) : (
-              <motion.form
-                key="otp"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                onSubmit={handleVerifyOtp}
-                className="space-y-4"
-              >
-                {info && <p className="text-sm text-muted-foreground text-center bg-muted rounded-xl px-4 py-3">{info}</p>}
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">Verification Code</label>
-                  <input
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter code from email"
-                    required
-                    className="w-full border border-border rounded-xl px-4 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 text-center tracking-widest text-lg"
-                  />
-                </div>
-                {error && <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-2.5">{error}</p>}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 disabled:opacity-40 transition-all"
-                >
-                  {loading ? "Verifying…" : "Verify & Continue"}
-                </button>
-                <button type="button" onClick={() => base44.auth.resendOtp(setupEmail)} className="w-full text-sm text-muted-foreground hover:text-foreground">
-                  Resend code
                 </button>
               </motion.form>
             )}
