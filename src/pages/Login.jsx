@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function Login() {
   const [mode, setMode] = useState("login"); // login | setup
   const [form, setForm] = useState({ id: "", password: "" });
-  const [setupForm, setSetupForm] = useState({ email: "", password: "", confirm: "" });
+  const [setupForm, setSetupForm] = useState({ id: "", password: "", confirm: "" });
+  const [setupEmail, setSetupEmail] = useState("");
   const [setupStep, setSetupStep] = useState("form"); // form | otp
   const [otp, setOtp] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -54,11 +55,28 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      await base44.auth.register({ email: setupForm.email, password: setupForm.password });
+      // Resolve ID → email across all account types
+      const id = setupForm.id.trim();
+      const [teachers, students, parents] = await Promise.all([
+        base44.entities.TeacherAccount.filter({ teacher_uid: id }),
+        base44.entities.StudentAccount.filter({ student_uid: id }),
+        base44.entities.ParentAccount.filter({ parent_uid: id }),
+      ]);
+      let email = "";
+      if (teachers[0]) email = teachers[0].email;
+      else if (students[0]) email = students[0].email;
+      else if (parents[0]) email = parents[0].linked_student_email; // child's email
+      if (!email) {
+        setError("ID not found. Please check your ID and try again.");
+        setLoading(false);
+        return;
+      }
+      setSetupEmail(email);
+      await base44.auth.register({ email, password: setupForm.password });
       setSetupStep("otp");
-      setInfo(`A verification code was sent to ${setupForm.email}`);
+      setInfo(`A verification code was sent to ${email}`);
     } catch (err) {
-      setError(err.message || "Setup failed. Your email may not be registered.");
+      setError(err.message || "Setup failed. Your ID may not be registered.");
     }
     setLoading(false);
   };
@@ -68,7 +86,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const { access_token } = await base44.auth.verifyOtp({ email: setupForm.email, otpCode: otp });
+      const { access_token } = await base44.auth.verifyOtp({ email: setupEmail, otpCode: otp });
       base44.auth.setToken(access_token);
       window.location.href = "/";
     } catch (err) {
@@ -186,12 +204,12 @@ export default function Login() {
                   Use this if your account was created by an admin and you haven't set a password yet.
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">Your Email</label>
+                  <label className="block text-sm font-medium mb-1.5">Your ID</label>
                   <input
-                    type="email"
-                    value={setupForm.email}
-                    onChange={(e) => setSetupForm({ ...setupForm, email: e.target.value })}
-                    placeholder="you@example.com"
+                    type="text"
+                    value={setupForm.id}
+                    onChange={(e) => setSetupForm({ ...setupForm, id: e.target.value })}
+                    placeholder="e.g. S2601, T2601, P2601"
                     required
                     className="w-full border border-border rounded-xl px-4 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
@@ -259,7 +277,7 @@ export default function Login() {
                 >
                   {loading ? "Verifying…" : "Verify & Continue"}
                 </button>
-                <button type="button" onClick={() => base44.auth.resendOtp(setupForm.email)} className="w-full text-sm text-muted-foreground hover:text-foreground">
+                <button type="button" onClick={() => base44.auth.resendOtp(setupEmail)} className="w-full text-sm text-muted-foreground hover:text-foreground">
                   Resend code
                 </button>
               </motion.form>
